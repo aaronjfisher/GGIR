@@ -19,11 +19,10 @@ g.fragmentation = function(x=c(),
   output = list()
   Nfragments = length(fragments$lengths)
   output[["Nfragments"]] = Nfragments
+  if ("all" %in% frag.metrics){
+    frag.metrics = c("mean_bout","TP","Gini","power","hazard")
+  }
   if (Nfragments > 1) {
-    
-    if ("all" %in% frag.metrics){
-      frag.metrics = c("mean_bout","TP","Gini","power","hazard")
-    }
     State1 = fragments$length[which(fragments$value == 1)]
     State0 = fragments$length[which(fragments$value == 0)]
     
@@ -53,6 +52,22 @@ g.fragmentation = function(x=c(),
     #   fita = survival::survfit(survival::Surv(State1,rep(1,length(State1)))~1)
     #   output[["h_0"]] =  mean(fitr$n.event/fitr$n.risk)
     #   output[["h_1"]] = mean(fita$n.event/fita$n.risk)
+    # }
+  } else {
+    if ("mean_bout" %in% frag.metrics){
+      output[["mean_0"]] = output[["mean_1"]] = ""
+    }
+    if ("TP" %in% frag.metrics){
+      output[["towardsTP"]] = output[["awayTP"]] = ""
+    }
+    if ("Gini" %in% frag.metrics){
+      output[["Gini_0"]] = output[["Gini_1"]] = ""
+    }
+    if ("power" %in% frag.metrics){
+      output[["alpha_0"]] = output[["alpha_1"]] = ""
+    }
+    # if ("hazard" %in% frag.metrics){
+    #   output[["h_0"]] = output[["h_1"]] = ""
     # }
   }
   return(output)

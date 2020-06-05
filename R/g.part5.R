@@ -533,9 +533,6 @@ g.part5 = function(datadir=c(),metadatadir=c(),f0=c(),f1=c(),strategy=1,maxdur=7
                         ds_names[fi] = "dur_spt_min";      fi = fi + 1
                         dsummary[di,fi] = (length(c(qqq1:qqq2)) * ws3new) / 60
                         ds_names[fi] = "dur_day_spt_min";      fi = fi + 1
-
-
-
                         #============================================
                         # Number of long wake periods (defined as > 5 minutes) during the night
                         Nawake = length(which(abs(diff(which(LEVELS[qqq1:qqq2] == 0))) > (300 / ws3new))) - 2
@@ -685,6 +682,30 @@ g.part5 = function(datadir=c(),metadatadir=c(),f0=c(),f1=c(),strategy=1,maxdur=7
                         }
                         fi = fi + bci
                         #===============================================
+                        # FRAGMENTATION per window, and split by night and day
+                        if (length(frag.classes.day_tmp) > 0 & length(frag.classes.spt_tmp) > 0 & length(frag.metrics) > 0) {
+                          binarize = function(x, values) {
+                            # converts input into binary signal, with a 1 for x values that match the vector values
+                            # and a 0 for all other values
+                            tmp = as.integer(ifelse(test = x %in% values, yes = 1, no = 0))
+                            return(tmp)
+                          }
+                          # daytime
+                          frag.classes.day2 = which(Lnames %in% frag.classes.day_tmp) - 1 # convert to numberic class id
+                          frag.out = g.fragmentation(x=binarize(LEVELS[sse[ts$diur[sse] == 0]], values = frag.classes.day2),
+                                                     frag.metrics = frag.metrics)
+                          dsummary[di,fi:(fi+(length(frag.out)-1))] = as.numeric(frag.out)
+                          ds_names[fi:(fi+(length(frag.out)-1))] = paste0("FRAG_",names(frag.out),"_day")
+                          fi = fi + length(frag.out)
+                          # spt
+                          frag.classes.spt2 = which(Lnames %in% frag.classes.spt_tmp) - 1 # convert to numberic class id
+                          frag.out = g.fragmentation(x=binarize(LEVELS[sse[ts$diur[sse] == 1]], values = frag.classes.spt2),
+                                                     frag.metrics = frag.metrics)
+                          dsummary[di,fi:(fi+(length(frag.out)-1))] = as.numeric(frag.out)
+                          ds_names[fi:(fi+(length(frag.out)-1))] = paste0("FRAG_",names(frag.out),"_spt")
+                          fi = fi + length(frag.out)
+                        }
+                        #===============================================
                         # NUMBER OF WINDOWS / BLOCKS
                         for (levelsc in 0:(length(Lnames)-1)) {
                           dsummary[di,fi] = length(which(diff(which(LEVELS[sse] != levelsc)) > 1)) #qqq1:qqq2
@@ -702,31 +723,6 @@ g.part5 = function(datadir=c(),metadatadir=c(),f0=c(),f1=c(),strategy=1,maxdur=7
                                             paste(boutdur.mvpa,collapse="_"), bout.metric)
                         ds_names[fi:(fi+6)] = c("boutcriter.in", "boutcriter.lig", "boutcriter.mvpa",
                                          "boutdur.in",  "boutdur.lig", "boutdur.mvpa", "bout.metric"); fi = fi + 7
-
-                        #===============================================
-                        # FRAGMENTATION per window, and split by night and day
-                        if (length(frag.classes.day_tmp) > 0 & length(frag.classes.spt_tmp) > 0 & length(frag.metrics) > 0) {
-                          binarize = function(x, values) {
-                            # converts input into binary signal, with a 1 for x values that match the vector values
-                            # and a 0 for all other values
-                            tmp = as.integer(ifelse(test = x %in% values, yes = 1, no = 0))
-                            return(tmp)
-                          }
-                          # daytime
-                          frag.classes.day2 = which(Lnames %in% frag.classes.day_tmp) - 1 # convert to numberic class id
-                          frag.out = g.fragmentation(x=binarize(LEVELS[sse[ts$diur[sse] == 0]], values = frag.classes.day2),
-                                                   frag.metrics = frag.metrics)
-                          dsummary[di,fi:(fi+(length(frag.out)-1))] = as.numeric(frag.out)
-                          ds_names[fi:(fi+(length(frag.out)-1))] = paste0("FRAG_",names(frag.out),"_day")
-                          fi = fi + length(frag.out)
-                          # spt
-                          frag.classes.spt2 = which(Lnames %in% frag.classes.spt_tmp) - 1 # convert to numberic class id
-                          frag.out = g.fragmentation(x=binarize(LEVELS[sse[ts$diur[sse] == 1]], values = frag.classes.spt2),
-                                                   frag.metrics = frag.metrics)
-                          dsummary[di,fi:(fi+(length(frag.out)-1))] = as.numeric(frag.out)
-                          ds_names[fi:(fi+(length(frag.out)-1))] = paste0("FRAG_",names(frag.out),"_spt")
-                          fi = fi + length(frag.out)
-                        }
                         #===============================================
                         # FOLDER STRUCTURE
                         if (storefolderstructure == TRUE) {
